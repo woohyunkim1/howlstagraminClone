@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoginActivity">
+
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/signin_layout"
+        android:layout_alignParentTop="true"
+        android:src="@drawable/logo_title" />
+    <LinearLayout
+        android:id="@+id/signin_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp">
+
+
+            <EditText
+                android:id="@+id/email_edittext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/email"></EditText>
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp">
+
+            <EditText
+                android:id="@+id/password_edittext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/password"></EditText>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="35dp"
+            android:text="@string/signin_email"
+            android:theme="@style/ButtonStyle" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/btn_signin_facebook"
+            android:text="@string/signin_facebook"
+            android:textColor="@color/colorWhite" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="80dp"
+            android:background="@drawable/btn_signin_google"
+            android:text="@string/signin_facebook"
+            android:textColor="@color/colorWhite" />
+
+        <TextView
+            android:id="@+id/signin_textview"
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            >
+        </TextView>
+    </LinearLayout>
+
+</RelativeLayout>
+
+<!--@+id : 새로 추가(+)하는 리소스 아이디-->
+<!-- - 다른 Activity와 동일한 리소스 아이디를 생성해도 괜찮다-->
+<!-- - 즉, @+id/test를 A.xml과 B.xml에서 동일하게 사용해도 괜찮다. 그러나 유니크하게 가는게 좋음-->
+
+<!--@id : 이미 추가되어 있는 리소스 아이디를 가리킴-->
+
+<!--@android:id : 안드로이드에 예약되어 잇는 리소스 아이디-->
