@@ -3,92 +3,84 @@ package com.example.howlstagramin_f16
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import com.example.howlstagramin_f16.contract.SignInIntentContract
+import com.example.howlstagramin_f16.model.UserDTO
 import com.example.howlstagramin_f16.databinding.ActivityLoginBinding
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-
-
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
-
-    // 전역 변수로 바인딩 객체 선언
-    private var mBinding: ActivityLoginBinding? = null
-
-    // 매번 null 체크를 할 필요 없이 편의성을 위해 바인딩 변수 재 선언
-    private val binding get() = mBinding!!
-
-    //lateinit : 초깃값 설정 않고, 선언 => 이후 사용할 떄 값 지정
-    private lateinit var auth: FirebaseAuth
-
+    private lateinit var binding: ActivityLoginBinding
+    private var auth: FirebaseAuth? = null
+    private var store: FirebaseFirestore? = null
+    var launcher: ActivityResultLauncher<String>? = null
+    private var TAG: String = "LoginActivity: "
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 기존 setContentView를 제거
-//      setContentView(R.layout.activity_login)
-
         //자동 생성된 뷰 바인딩 클래스에서의 inflate라는 메서드를 활용해
         //액티비티에서 사용할 바인딩 클래스의 인스턴스 생성
-        mBinding = ActivityLoginBinding.inflate(layoutInflater)
-
-        // getRoot 메서드로 레이아웃 내부의 최상위 위치 뷰의 인스턴스를 활용하여 생성된 뷰를 액티비티에 표시
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        //getRoot 메서드로 레이아웃 내부의 최상위 위치 뷰의 인스턴스를 활용해 생성된 뷰를 액티비티에 표시.
         setContentView(binding.root)
 
-//        auth = Firebase.auth //FirebaseAuth 인스턴스 초기화
-        //auth 객체 초기화
         auth = FirebaseAuth.getInstance()
+        store = FirebaseFirestore.getInstance()
 
-        //이제부터 binding  바인딩 변수를 활용하여 xml 파일 내 뷰 id 접근이 가능
-        //뷰 id도 파스칼케이스 + 카멜케이스의 네이밍 규칙 적용으로 자동변환
-        binding.signinTextview.setText(("안녕하세요 \\=0ㅁ0=/"))
+        //LoginActivity -> 구글로그인 화면 -> LoginActivity로 돌아온 후 콜백 함수.
+        //구글로그인 화면을 통해 얻어온 tokenId를 이용해 Firebase 사용자 인증 정보로 교환하고
+        //해당 정보를 사용해 Firebase에 인증합니다.
+        launcher = registerForActivityResult(SignInIntentContract()) { result: String? ->
+            result?.let {
+                firebaseAuthWithGoogle(it)  //tokenId를 이용해 firebase에 인증하는 함수 호출.
+            }
+        }
+
         binding.emailLoginButton.setOnClickListener {
             signUp()
         }
-
-    }
-
-    override fun onStart() {
-        super.onStart()
-        val currenUser = auth.currentUser
-        if(currenUser != null){
-
-        }
-    }
-
-    override fun onDestroy() {
-        //onDestroy 에서 binding class 인스턴스 참조를 정리
-        mBinding = null
-        super.onDestroy()
-    }
-
-    private fun signUp(){
-        var email = binding.emailEdittext.text?.toString()?: "woohyun_kim@daekyo.co.kr"
-        var password = binding.passwordEdittext.text?.toString()?: "tl7820td!"
-
-        if(email =="" || password==  ""){
-            email ="woohyun_kim@daekyo.co.kr"
-            password = "tl7820td!"
+        binding.googleLoginButton.setOnClickListener {
+            //Launcher를 실행해 LoginActivity -> 구글 로그인 화면으로 이동.
+            launcher!!.launch(getString(R.string.default_web_client_id))
         }
 
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->//통신 완료가 된 후 무슨 일을 할지
-                if (task.isSuccessful) {
-                    //로그인 성공
-                    Toast.makeText(
-                        this,
-                        getString(R.string.signin_complete), Toast.LENGTH_SHORT
-                    ).show()
+    }
 
-                    moveMainPage(task.result?.user)
-                }else if(task.exception?.toString().isNullOrEmpty()){
-                    Toast.makeText(this,task.exception?.message,Toast.LENGTH_SHORT).show()
+    //회원가입
+    fun signUp() {
+        var email: String = binding.emailEditText.text.toString()
+        var password: String = binding.passwordEditText.text.toString()
 
+        if (email.isEmpty()||password.isEmpty()) {
+            Toast.makeText(this@LoginActivity, R.string.signin_fail_null, Toast.LENGTH_SHORT)
+                .show()
+
+            return
+        }
+
+        auth!!.createUserWithEmailAndPassword(email!!, password!!)
+            .addOnCompleteListener(this@LoginActivity) { task ->
+                if (task.isSuccessful) {    //로그인 성공
+                    //신규 사용자의 경우 users 데이터베이스에 데이터 저장.
+                    var userDTO: UserDTO = UserDTO()
+                    userDTO.uid = auth!!.uid
+                    userDTO.email = auth!!.currentUser!!.email
+                    store!!.collection("users").document(auth!!.uid!!).set(userDTO)
+
+                    //DB 저장 후 메인 화면으로 이동.
+                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                 } else if (task.exception!!.toString()
                         .contains("FirebaseAuthWeakPasswordException")
                 ) {
                     //회원가입 시 비밀번호가 6자리 이상으로 입력하지 않은 경우
                     Toast.makeText(
-                        this, "비밀번호는 6자리 이상이어야 합니다.",
+                        this@LoginActivity, "비밀번호는 6자리 이상이어야 합니다.",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else if (task.exception!!.toString()
@@ -97,40 +89,29 @@ class LoginActivity : AppCompatActivity() {
                     //이미 존재하는 사용자 -> 로그인 함수 호출.
                     emailSignIn()
                 } else {
-                    println(task.exception.toString())
+                    Log.e(TAG, task.exception.toString())
                     Toast.makeText(
-                        this, task.exception.toString(),
+                        this@LoginActivity, task.exception.toString(),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
             }
     }
 
-    private fun emailSignIn(){
+    //이메일 로그인
+    fun emailSignIn() {
+        var email: String = binding.emailEditText.text.toString().trim()
+        var password: String = binding.passwordEditText.text.toString().trim()
 
-        var email = binding.emailEdittext.text?.toString()?: "woohyun_kim@daekyo.co.kr"
-        var password = binding.passwordEdittext.text?.toString()?: "tl7820td!"
-
-
-        if(email =="" || password==  ""){
-            email ="woohyun_kim@daekyo.co.kr"
-            password = "tl7820td!"
-        }
-
-        auth.signInWithEmailAndPassword(email, password)
+        auth!!.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     //로그인 성공
-                    Toast.makeText(
-                        this,
-                        getString(R.string.signin_complete),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    moveMainPage(task.result?.user)
+                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                 } else {
                     //로그인 실패
                     Toast.makeText(
-                        this,
+                        this@LoginActivity,
                         getString(R.string.signout_fail_null),
                         Toast.LENGTH_SHORT
                     ).show()
@@ -138,48 +119,41 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+    //tokenId를 이용해 firebase에 인증하는 함수.
+    fun firebaseAuthWithGoogle(idToken: String) {
+        //it가 tokenId, credential은 Firebase 사용자 인증 정보.
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
 
-    private fun moveMainPage(user: FirebaseUser?){
-        if(user!= null){
-            //Activity 간 이동
-            //startActivity() - 결과를 받지 않음
-            //startActivityForResult() - 결과를 받음
-            startActivity(Intent(this,MainActivity::class.java))
-        }
+        //Firebase 사용자 인증 정보(credential)를 사용해 Firebase에 인증.
+        auth!!.signInWithCredential(credential)
+            .addOnCompleteListener(this@LoginActivity) { task: Task<AuthResult> ->
+                if (task.isSuccessful) {
+                    //신규 사용자면 user DB에 데이터 저장하기
+                    var userDoc = store!!.collection("users").document(auth!!.uid!!)
+                    store!!.runTransaction { transaction ->
+                        if(!transaction.get(userDoc).exists()) {
+                            var userDTO: UserDTO = UserDTO()
+                            userDTO.uid = auth!!.uid
+                            userDTO.email = auth!!.currentUser!!.email
+                            transaction.set(userDoc, userDTO)
+                        }
+                    }.addOnSuccessListener {
+                        // Sign in success, update UI with the signed-in user's information
+                        startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                    }.addOnFailureListener {
+                        Log.e(TAG, task.exception.toString())
+                        Toast.makeText(
+                            this@LoginActivity, getString(R.string.signin_google_faile),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    Log.e(TAG, task.exception.toString())
+                    Toast.makeText(
+                        this@LoginActivity, getString(R.string.signin_google_faile),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
     }
 }
-
-//1. var / val 키워드
-//    var = variable = 읽기/ 쓰기가 가능한 일반 변수
-//    val = valuable = 읽기만 가능한 final 변수
-//
-//2. Non-Null / Nullable
-//    Nullable - null을 값으로 가질 수 있다.
-//    Non-null - null을 값으로 가질 수 없다.
-//
-//3. println("텍스트 $변수")
-
-//4. nullCheck
-// ? 는 변수에 null 값을 넣을 수 있다(널 허용)는 것을 뜻함.
-// !! 는 해당 변수가 현재 널 값이 아니라고 컴파일러에게 알려줘서 컴파일 에러가 나지 않도록 할 때 사용.
-// 둘 다 null 선언이 된 상태에서 값을 수정하거나 출력하려 하면 null check 에러가 뜨는 경우 해결
-
-//5. 형변환
-// to.타입()을 붙여 타입 변경 가능
-// nullCheck를 하는 경우 변수!!.toInt()로 가능
-
-//6. 프로퍼티 초기화
-//6-1. lateinit
-//- var 프로퍼티에서 사용가능
-//- null을 허용하지 않음
-//- get() set() 사용이 불가능함
-//- 생성자에서 사용 불가능
-//isInitialized를 사용해서 프로퍼티가 초기화 되었는지 확인 가능
-//6-2.  be lazy
-//- val 에서 사용 가능
-//- get() set() 을 지원하지 않음
-//- 널 허용
-//- 클래스 생성자에서 사용 불가
-//6-3. be lazy를 사용하는 경우
-//- 반드시 초기화를 안해도 되는 경우(null 허용)
-//- 최초 초기화 후 다시 초기화 할 일이 없을 떄 (val)

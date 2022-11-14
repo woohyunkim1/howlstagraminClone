@@ -15,17 +15,14 @@ import android.util.Base64.NO_WRAP
 import android.util.Log
 import android.widget.ImageView
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import com.example.howlstagramin_f16.databinding.ActivityUploadBinding
 import com.google.gson.JsonObject
-import dto.DataModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import service.RetrofitAPI
+import com.example.howlstagramin_f16.service.RetrofitAPI
+import com.example.howlstagramin_f16.databinding.ActivityUploadBinding
 import java.io.ByteArrayOutputStream
-import java.io.File
 import java.io.InputStream
 
 class UploadActivity : AppCompatActivity() {
@@ -75,7 +72,6 @@ class UploadActivity : AppCompatActivity() {
 
     private fun uploadingFile(){
         openGallery() //갤러리 열기
-        doFileUpdload()
     }
 
     private fun openGallery(){

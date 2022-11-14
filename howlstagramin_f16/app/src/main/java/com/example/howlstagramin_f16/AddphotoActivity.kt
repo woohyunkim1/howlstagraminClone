@@ -10,13 +10,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.howlstagramin_f16.databinding.ActivityAddphotoBinding
+import com.example.howlstagramin_f16.model.ContentDTO
 
-import com.google.android.gms.auth.api.signin.internal.Storage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import dto.ContentDTO
+import com.example.howlstagramin_f16.databinding.ActivityAddphotoBinding
 import retrofit2.http.Url
 import java.text.SimpleDateFormat
 import java.util.*

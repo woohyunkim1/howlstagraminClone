@@ -4,7 +4,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".AddphotoActivity">
+        tools:context="com.example.howlstagramin_f16.AddphotoActivity">
 
     <RelativeLayout
             android:layout_width="match_parent"
@@ -61,7 +61,9 @@
                 android:text="@string/upload_image"
                 android:layout_below="@id/editText"
                 android:layout_toRightOf="@id/addphoto_image"
-                android:theme="@style/ButtonStyle" />
+                android:theme="@style/ButtonStyle"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="2dp" />
     </RelativeLayout>
 
 
